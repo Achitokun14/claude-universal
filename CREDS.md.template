@@ -1,0 +1,91 @@
+# Credentials Inventory (template)
+
+> **This is a template.** Copy it to `CREDS.md` (which is `.gitignored`) and fill in your local environment-variable inventory. Never commit real keys.
+
+This file documents **which env vars** the bundle reads, **what each one does**, and **where each one is consumed**. The actual secret values live in your shell rc (`~/.zshrc` / `~/.bashrc`) or a password manager — never in this repo.
+
+## Required env vars (top tier)
+
+| Variable | Where it's used | What happens if missing |
+|---|---|---|
+| `MINIMAX_API_KEY` | Goose planner, Claw, Kimi/OpenCode aggregator providers | Goose `--plan` returns 401, Claw can't route, Kimi/OpenCode aggregator providers unavailable |
+| `ANTHROPIC_API_KEY` | Claude Code direct mode (without aggregator) | Claude Code falls back to subscription auth |
+| `OPENAI_API_KEY` | Codex, optional fallback in some scripts | Codex fails to start |
+| `GEMINI_API_KEY` | Gemini CLI, langextract, `/extract` skill backend | Gemini CLI 401, `/extract` falls back to OpenAI |
+
+## Optional env vars (per-tool extras)
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `CLAW_API_KEY` | Claw Code | Aggregator key (usually mirror of `MINIMAX_API_KEY`) |
+| `CLAW_API_BASE_URL` | Claw Code | Custom aggregator endpoint (default: `https://api.minimaxi.chat/v1`) |
+| `OLLAMA_HOST` | Ollama-cloud providers in OpenCode/Kimi | Defaults to `https://ollama.com` |
+| `FIRECRAWL_API_KEY` | Firecrawl MCP / `firecrawl` CLI | Web scraping |
+| `BROWSERBASE_API_KEY` | Browserbase MCP | Cloud browser automation |
+| `BROWSERBASE_PROJECT_ID` | Browserbase MCP | Project routing |
+| `GITHUB_TOKEN` | GitHub MCP, `gh` CLI ops | Repo access |
+| `GITLAB_TOKEN` | GitLab MCP | Repo access |
+| `LINEAR_API_KEY` | Linear MCP | Issue tracking |
+| `NOTION_API_KEY` | Notion MCP | Workspace access |
+| `STRIPE_SECRET_KEY` | Stripe MCP | Test or live key — make sure you know which |
+| `SENTRY_AUTH_TOKEN` | Sentry MCP | Error tracking |
+| `POSTHOG_API_KEY` | PostHog MCP | Analytics |
+| `RAILWAY_TOKEN` | Railway MCP / `railway` CLI | Deploys |
+| `VERCEL_TOKEN` | Vercel MCP / `vercel` CLI | Deploys |
+
+## Per-CLI shell rc patterns
+
+### `~/.zshrc` (or `.bashrc`) — recommended layout
+
+```bash
+# ─── AI keys ────────────────────────────────────────
+export MINIMAX_API_KEY="<<paste from password manager>>"
+export ANTHROPIC_API_KEY="<<paste>>"
+export OPENAI_API_KEY="<<paste>>"
+export GEMINI_API_KEY="<<paste>>"
+
+# ─── Aggregator (Claw, Kimi/OpenCode providers) ──────
+export CLAW_API_KEY="$MINIMAX_API_KEY"
+export CLAW_API_BASE_URL="https://api.minimaxi.chat/v1"
+
+# ─── Local Ollama ───────────────────────────────────
+export OLLAMA_HOST="http://127.0.0.1:11434"   # local
+# export OLLAMA_HOST="https://ollama.com"     # cloud
+
+# ─── MCPs (optional) ────────────────────────────────
+export FIRECRAWL_API_KEY="<<paste>>"
+export GITHUB_TOKEN="<<paste>>"
+# … add others as needed
+```
+
+After editing: `source ~/.zshrc`.
+
+## Storage — your options
+
+1. **Shell rc with `chmod 600`** (simplest, fine for personal machines)
+2. **Bitwarden CLI** (`bw get password <name>` in shell rc — load on demand)
+3. **1Password CLI** (`op read "op://Vault/Item/credential"`)
+4. **macOS Keychain** / **Linux secret-tool** (gnome-keyring)
+5. **HashiCorp Vault** (overkill for personal but solid for teams)
+
+See `SECRETS.md.template` for storage cookbooks.
+
+## Rotation
+
+- Rotate `MINIMAX_API_KEY` if you ever see it in a transcript leak (Goose history, terminal recording, etc.)
+- Rotate keys yearly even without incident
+- After rotation, also update **all** places that reference the old key (`grep -r "OLD_KEY_PREFIX" ~/.{zshrc,config,claude,kimi,gemini,codex}`)
+
+## Where the bundle expects keys (audit map)
+
+| File | Reads via |
+|---|---|
+| `user/settings.json` | n/a — Claude Code settings has no secret fields |
+| `~/.config/goose/config.yaml` | `GOOSE_OPENAI_API_KEY` (often points at MiniMax aggregator) |
+| `~/.config/opencode/opencode.json` | `{env:MINIMAX_API_KEY}` interpolation |
+| `~/.kimi/config.toml` | `api_key_env = "MINIMAX_API_KEY"` |
+| `~/.codex/config.toml` | `api_key = "<value>"` (literal — store with `chmod 600`) |
+| `~/.gemini/settings.json` | inherited from `GEMINI_API_KEY` env |
+| `~/.config/claw/env.sh` | `CLAW_API_KEY`, `CLAW_API_BASE_URL` |
+
+If you spot a key in a committed file, that's a bug — please file a security report (see `SECURITY.md`).

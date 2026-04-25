@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# EXAMPLE project-level hook — rename to remove the .example extension to enable.
+# PreToolUse(Bash) — run the test suite before any `git commit` in this repo.
+# Blocks the commit if tests fail.
+
+set -euo pipefail
+
+payload="$(cat)"
+command="$(echo "$payload" | jq -r '.tool_input.command // ""')"
+
+echo "$command" | grep -qE 'git[[:space:]]+commit' || exit 0
+
+# Run your project's fastest test gate here — tweak the command.
+if ! npm test --silent >/dev/null 2>&1; then
+  cat <<MSG >&2
+BLOCKED: tests failed — not committing.
+
+Run 'npm test' and fix the failures before trying again.
+MSG
+  exit 2
+fi
+
+exit 0

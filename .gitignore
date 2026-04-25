@@ -1,0 +1,67 @@
+# ─── Local secrets (must never be committed) ────────────────────────
+CREDS.md
+SECRETS.md
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+.credentials.json
+
+# ─── Build artifacts ────────────────────────────────────────────────
+*.zip
+*.tar.gz
+dist/
+build/
+
+# ─── Settings backups (created by install.sh) ───────────────────────
+*.bak
+*.bak.*
+settings.json.bak.*
+
+# ─── Hook state ─────────────────────────────────────────────────────
+.state/
+*.last
+
+# ─── Editor / IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Python ─────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# ─── Node ───────────────────────────────────────────────────────────
+node_modules/
+package-lock.json.bak
+.npm/
+
+# ─── Claude Code session data ───────────────────────────────────────
+.claude/sessions/
+.claude/settings.local.json
+.claude/stats-cache.json
+.claude/.credentials.json
+.claude/projects/
+
+# ─── User-machine paths that shouldn't be tracked ───────────────────
+/home/*/
+/Users/*/
+C:\Users\
+
+# ─── Pack staging dirs ──────────────────────────────────────────────
+/tmp-pack/
+/staging/
+
+# ─── References (large, cloned at install time) ─────────────────────
+references/
+_inspired/

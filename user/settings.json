@@ -1,0 +1,263 @@
+{
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest",
+  "minimumVersion": "2.1.11",
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(pwd)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(file:*)",
+      "Bash(which:*)",
+      "Bash(command -v:*)",
+      "Bash(echo:*)",
+      "Bash(env:*)",
+      "Bash(date:*)",
+      "Bash(uname:*)",
+      "Bash(df -h)",
+      "Bash(du -sh:*)",
+      "Bash(free -h)",
+      "Bash(lsblk)",
+      "Bash(tree:*)",
+      "Bash(bat:*)",
+      "Bash(batcat:*)",
+      "Bash(fd:*)",
+      "Bash(fdfind:*)",
+      "Bash(eza:*)",
+      "Bash(rg:*)",
+      "Bash(jq:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git config --get:*)",
+      "Bash(git stash list)",
+      "Bash(git worktree list)",
+      "Bash(npm list:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx biome:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(bun pm ls)",
+      "Bash(bun run build:*)",
+      "Bash(bun run test:*)",
+      "Bash(bun test:*)",
+      "Bash(pip list:*)",
+      "Bash(pip show:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format --check:*)",
+      "Bash(mypy:*)",
+      "Bash(biome check:*)",
+      "Bash(biome format:*)",
+      "Bash(cargo build)",
+      "Bash(cargo test)",
+      "Bash(cargo check:*)",
+      "Bash(cargo fmt --check)",
+      "Bash(cargo clippy:*)",
+      "Bash(go build:*)",
+      "Bash(go test:*)",
+      "Bash(go vet:*)",
+      "Bash(gofmt -l:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:nextjs.org)",
+      "WebFetch(domain:developer.mozilla.org)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/*)",
+      "Bash(rm -rf $HOME)",
+      "Bash(sudo rm -rf:*)",
+      "Bash(dd if=*)",
+      "Bash(mkfs*)",
+      "Bash(mkfs.*:*)",
+      "Bash(> /dev/sda*)",
+      "Bash(> /dev/nvme*)",
+      "Bash(chmod 777 /:*)",
+      "Bash(chown -R root:*)",
+      "Bash(:(){ :|:& };:)",
+      "Bash(curl * | bash)",
+      "Bash(curl * | sh)",
+      "Bash(wget * | bash)",
+      "Bash(wget * | sh)",
+      "Bash(eval $(curl:*))"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git rebase:*)",
+      "Bash(npm publish:*)",
+      "Bash(pnpm publish:*)",
+      "Bash(yarn publish:*)",
+      "Bash(cargo publish:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(sudo:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release create:*)",
+      "Bash(railway up:*)",
+      "Bash(vercel deploy:*)",
+      "Bash(vercel --prod:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-ai-attribution.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-secret-writes.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/auto-format.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/track-resources.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/entity-tracker.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/track-improvement.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/memory-compiler.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tool-inventory.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/skill-router.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "playwright@claude-plugins-official": false,
+    "firecrawl@claude-plugins-official": true,
+    "serena@claude-plugins-official": true,
+    "prisma@claude-plugins-official": true,
+    "railway@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "gitlab@claude-plugins-official": true,
+    "linear@claude-plugins-official": true,
+    "sentry@claude-plugins-official": true,
+    "notion@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true,
+    "stripe@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "microsoft-docs@claude-plugins-official": true,
+    "mintlify@claude-plugins-official": true,
+    "aikido@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true
+  }
+}

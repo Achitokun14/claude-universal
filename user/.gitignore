@@ -1,0 +1,23 @@
+# Claude Code — ignore machine-specific + sensitive files when .claude/ is inside a repo.
+# Copy this to your project's .gitignore or add these lines.
+
+# Machine-specific / ephemeral
+.claude/settings.local.json
+.claude/sessions/
+.claude/stats-cache.json
+.claude/mcp-needs-auth-cache.json
+.claude/security_warnings_state_*.json
+.claude/install-counts-cache.json
+
+# Credentials — NEVER commit
+.claude/.credentials.json
+.claude/*.credentials.json
+.claude/auth.json
+.claude/credentials/
+
+# Plugin caches (huge, regenerated on install)
+.claude/plugins/cache/
+.claude/plugins/marketplaces/
+
+# Plans you want local-only
+.claude/plans/

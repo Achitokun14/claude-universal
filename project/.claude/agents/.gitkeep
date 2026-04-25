@@ -1,0 +1,10 @@
+# Put custom project agents here.
+# Each agent is a .md file with YAML frontmatter:
+#
+#   ---
+#   description: What this agent does and when to trigger it
+#   tools: Read, Grep, Bash
+#   model: sonnet
+#   ---
+#
+#   System prompt body goes here.
