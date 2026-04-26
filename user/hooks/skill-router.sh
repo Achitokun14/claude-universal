@@ -47,30 +47,46 @@ PROMPT_LC="$(printf '%s' "$PROMPT" | tr '[:upper:]' '[:lower:]')"
 # Parse config. Format per line:
 #   pattern|||skill_name|||one-line purpose
 # Lines starting with # or blank are ignored.
-declare -a HINTS=()
-declare -A SEEN=()
+# Indexed array (bash 3.2+) — no associative arrays so we work on macOS /bin/bash too.
+HINTS=()
+SEEN_NAMES=":"  # colon-delimited list, e.g. ":plan:nextjs:"
+HINT_COUNT=0
 while IFS='' read -r line || [[ -n "$line" ]]; do
-  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+  [[ -z "$line" ]] && continue
+  # Skip comment lines (leading whitespace + #). Bash 3.2 compatible.
+  trimmed="${line#"${line%%[![:space:]]*}"}"
+  case "$trimmed" in '#'*) continue ;; esac
   pat="${line%%|||*}"
   rest="${line#*|||}"
   name="${rest%%|||*}"
   purpose="${rest#*|||}"
   [[ -z "$pat" || -z "$name" ]] && continue
 
-  if [[ "$PROMPT_LC" =~ $pat ]]; then
-    # Dedup within this invocation.
-    [[ -n "${SEEN[$name]:-}" ]] && continue
-    SEEN["$name"]=1
-    HINTS+=("$name|||$purpose")
-    [[ ${#HINTS[@]} -ge $MAX_HINTS ]] && break
+  # Use grep (not bash =~) so the regex engine is consistent across BSD + GNU.
+  if printf '%s' "$PROMPT_LC" | grep -Eq -- "$pat"; then
+    # Dedup within this invocation (string-list, no associative array).
+    case "$SEEN_NAMES" in *":${name}:"*) continue ;; esac
+    SEEN_NAMES="${SEEN_NAMES}${name}:"
+    HINTS[HINT_COUNT]="${name}|||${purpose}"
+    HINT_COUNT=$((HINT_COUNT + 1))
+    [[ $HINT_COUNT -ge $MAX_HINTS ]] && break
   fi
 done < "$ROUTER_CONF"
 
 # No matches → silent exit.
 [[ ${#HINTS[@]} -eq 0 ]] && exit 0
 
-# Build output signature (for dedup across prompts).
-SIG="$(printf '%s\n' "${HINTS[@]}" | sha1sum | cut -c1-12)"
+# Build output signature (for dedup across prompts). Use shasum (portable) over
+# sha1sum (linux-only). Fall back to md5sum/md5 if neither is available.
+_hash() {
+  if command -v shasum  >/dev/null 2>&1; then shasum -a 1
+  elif command -v sha1sum >/dev/null 2>&1; then sha1sum
+  elif command -v md5sum  >/dev/null 2>&1; then md5sum
+  elif command -v md5     >/dev/null 2>&1; then md5
+  else cat  # no hash; dedup degraded but functional
+  fi
+}
+SIG="$(printf '%s\n' "${HINTS[@]}" | _hash | cut -c1-12)"
 LAST_SIG="$(cat "$STATE_FILE" 2>/dev/null || echo '')"
 
 # Same hints as last prompt → skip (user saw them already).

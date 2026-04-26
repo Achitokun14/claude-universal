@@ -1,16 +1,56 @@
 # shellcheck config — claude-universal
-# Disabled checks justified inline.
+# Each disable has a justification.
 
-# SC2086: word-splitting in unquoted vars — we deliberately splat in some places
+# SC2086 — word-splitting in unquoted vars
+# We deliberately splat in some places (e.g. cmd lists). Quoting blanket would break those.
 disable=SC2086
 
-# SC1091: not following sourced files (lib/*.sh sourced at runtime)
+# SC1091 — not following sourced files
+# lib/*.sh sourced at runtime; shellcheck can't follow $BUNDLE_DIR var.
 disable=SC1091
 
-# SC2155: declare-and-assign warning — used widely, low-risk
+# SC2155 — declare and assign separately
+# Used widely; the masked return value risk is acceptable for our patterns.
 disable=SC2155
 
-# SC2154: var referenced but not assigned — we set vars from sourced helpers
+# SC2154 — var referenced but not assigned
+# Vars set by sourced lib/*.sh — shellcheck can't see them at parse time.
 disable=SC2154
+
+# SC2034 — appears unused
+# Many lib/*.sh files set vars consumed by the orchestrator (setup.sh) after sourcing.
+# shellcheck can't follow that across files.
+disable=SC2034
+
+# SC2031 — var modified in subshell
+# Triggered by the intentional `(. /etc/os-release && echo "$ID")` subshell-isolation
+# pattern in lib/detect.sh — we WANT the subshell so /etc/os-release doesn't clobber our env.
+disable=SC2031
+
+# SC2012 — use find instead of ls
+# `ls` is fine here; targets are well-known directories without weird filenames.
+disable=SC2012
+
+# SC2015 — A && B || C is not if-then-else
+# We use this pattern intentionally for "best effort" calls where C is a safe fallback.
+# Real if-then-else is used where it matters.
+disable=SC2015
+
+# SC2016 — expressions don't expand in single quotes
+# We use single quotes deliberately when we want literal $vars (printf format strings,
+# embedded JSON snippets, heredoc keys).
+disable=SC2016
+
+# SC2064 — single-quote trap content
+# Trap-on-EXIT with $tmp expands at trap time anyway — false positive in our patterns.
+disable=SC2064
+
+# SC2254 — quote case patterns
+# We use globs in case() intentionally for path matching.
+disable=SC2254
+
+# SC2010 — don't ls | grep
+# Used in install-inspired.sh final summary; targets only symlinks (^l) — ls is the right tool.
+disable=SC2010
 
 external-sources=true
