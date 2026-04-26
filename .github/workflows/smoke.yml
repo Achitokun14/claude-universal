@@ -1,0 +1,74 @@
+name: smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke-linux:
+    name: smoke (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup --version
+        run: ./setup --version
+
+      - name: Run setup --help
+        run: ./setup --help
+
+      - name: Run setup --doctor (read-only)
+        run: ./setup --doctor
+
+      - name: Run setup --dry-run --yes (full plan, no changes)
+        run: |
+          export HOME=/tmp/fake-home
+          mkdir -p "$HOME"
+          ./setup --dry-run --yes
+
+      - name: Run smoke test suite
+        run: |
+          export HOME=/tmp/fake-home-smoke
+          mkdir -p "$HOME"
+          bash tests/smoke.sh
+
+      - name: Verify VERSION matches CHANGELOG
+        run: |
+          set -e
+          ver="$(cat VERSION)"
+          if ! grep -q "^## \[$ver\]" CHANGELOG.md user/docs/CHANGELOG.md; then
+            echo "::error::VERSION $ver not found in CHANGELOG"
+            exit 1
+          fi
+
+  smoke-macos:
+    name: smoke (macos)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: brew install jq
+
+      - name: Run setup --version
+        run: ./setup --version
+
+      - name: Run setup --help
+        run: ./setup --help
+
+      - name: Run setup --doctor (read-only)
+        run: ./setup --doctor
+
+      - name: Run setup --dry-run --yes (full plan, no changes)
+        run: |
+          export HOME=/tmp/fake-home
+          mkdir -p "$HOME"
+          ./setup --dry-run --yes
+
+      - name: Run smoke test suite
+        run: |
+          export HOME=/tmp/fake-home-smoke
+          mkdir -p "$HOME"
+          bash tests/smoke.sh
