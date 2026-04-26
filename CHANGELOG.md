@@ -4,6 +4,36 @@ The full version history lives at [user/docs/CHANGELOG.md](user/docs/CHANGELOG.m
 
 For all versions: see [user/docs/CHANGELOG.md](user/docs/CHANGELOG.md).
 
+## [1.18.0] — 2026-04-26
+
+### Added — one-command universal `./setup`
+
+`./setup` is now the canonical entrypoint. Detects OS, pkg-manager, shell, and which AI CLIs are installed, then plans → confirms → installs → verifies. Idempotent (re-run = safe no-op when up-to-date), updateable (`--update`), reversible (`--uninstall`).
+
+**New flags:**
+`--dry-run` · `--yes` · `--update` · `--uninstall` · `--doctor` · `--with=NAME[,NAME]` · `--skip=STEP[,STEP]` · `--only=user` · `--version` · `--help`
+
+**Architecture:**
+- `setup.sh` (orchestrator, ~280 lines)
+- `lib/{ui,detect,deps,plan,apply,verify}.sh` (single-purpose helpers)
+- `VERSION` file as single source-of-truth
+- Manifest at `~/.claude/.claude-universal-manifest.json` records install state for clean updates/uninstalls
+
+### CI + tests
+- `.github/workflows/lint.yml` — shellcheck, shfmt (advisory), secret-scan, path-leak-scan
+- `.github/workflows/smoke.yml` — runs `./setup --version|--help|--doctor|--dry-run --yes` + `tests/smoke.sh` on Ubuntu + macOS
+- `tests/smoke.sh` — 15-assertion smoke suite (15/15 passing)
+
+### Fixed
+- `notify-stop.sh` — cross-OS now (Linux notify-send / macOS osascript / Windows PowerShell), silently no-op if no notifier
+- `skill-router.sh` — falls back to script-adjacent `skill-router.conf` if `~/.claude/hooks/skill-router.conf` is absent (lets fresh installs and tests work)
+- Removed misleading TODO in `install-inspired.sh:183` (skills-selective falls through correctly to surface_skills)
+
+### Cleanups
+- `.shellcheckrc` + `.editorconfig` for consistent contributor formatting
+- `install.sh` reads `VERSION` and supports `--version` + `--help`
+
+
 ## [1.17.0] — 2026-04-25
 
 ### Added — Obsidian + markitdown universal tools

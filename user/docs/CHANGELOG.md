@@ -2,6 +2,58 @@
 
 All notable changes to the `claude-universal` bundle. Format: [Keep a Changelog](https://keepachangelog.com), semver.
 
+## [1.18.0] — 2026-04-26
+
+### Added — one-command universal `./setup`
+
+Single entrypoint replacing the previous "run install.sh, then install-skills.sh, then init-llm-wiki.sh, then ..." chain. Detects host environment, plans changes, prompts once, applies idempotently. Re-running is a safe no-op. Updateable (`--update` does git pull + reapply). Reversible (`--uninstall` restores latest .bak and strips bundle entries).
+
+**Flags:**
+`--dry-run` · `--yes` / `-y` · `--update` · `--uninstall` · `--doctor` · `--with=NAME[,NAME]` · `--skip=STEP[,STEP]` · `--only=user` · `--version` · `--help`
+
+**Architecture:**
+- `setup.sh` (~280 lines, orchestration only — never duplicates logic)
+- `lib/ui.sh` — colors, prompts, dry-run wrapper
+- `lib/detect.sh` — OS / arch / pkg-manager / shell / AI CLIs / bundle state (fresh vs installed)
+- `lib/deps.sh` — install missing prereqs (jq, python3, node, curl, git) per OS
+- `lib/plan.sh` — pretty-print the change plan
+- `lib/apply.sh` — wraps existing install.sh + install-skills.sh + sync-cross-tool* + add-on installers
+- `lib/verify.sh` — post-install smoke checks; doctor-mode adds suggestions for missing CLIs
+- `VERSION` file at repo root — single source-of-truth read by setup, install.sh, CI verify-step
+- Manifest at `~/.claude/.claude-universal-manifest.json` records `{version, installed_at, bundle_dir, addons, host}`. Drives update detection + clean uninstall.
+
+**OS detection matrix:**
+| Linux distros | macOS | WSL | Windows native |
+|---|---|---|---|
+| ubuntu / debian / fedora / rhel / arch / opensuse / alpine (auto-detected) | brew | inherits linux | `setup.ps1` mirror (Phase 4 — pending) |
+
+**Existing scripts unchanged** — setup.sh is pure orchestration. Power users can still call `install.sh user` / `install-skills.sh` / `scripts/install-obsidian.sh` directly.
+
+### CI + tests
+- `.github/workflows/lint.yml` — shellcheck (fail), shfmt (advisory), secret-scan, path-leak-scan
+- `.github/workflows/smoke.yml` — Ubuntu + macOS matrix; runs `./setup --version|--help|--doctor|--dry-run` and `tests/smoke.sh`
+- `tests/smoke.sh` — 15-assertion suite (currently 15/15 passing locally)
+- VERSION ↔ CHANGELOG consistency check in CI
+
+### Fixed
+- **`notify-stop.sh`** — cross-OS implementation. Linux uses `notify-send`, macOS uses `osascript`, Windows/Cygwin/MSYS uses PowerShell. Silently no-ops if no notifier is available.
+- **`skill-router.sh`** — `ROUTER_CONF` falls back to `<script-dir>/skill-router.conf` if `~/.claude/hooks/skill-router.conf` is absent. Lets fresh installs and isolated-HOME tests work.
+- **`install-inspired.sh:183`** — removed misleading `# TODO: actual selection` comment; the `skills-selective` case correctly falls through to `surface_skills`.
+- **`/etc/os-release` sourcing** — wrapped in subshell so its `VERSION=...` doesn't clobber our bundle's `VERSION` env var (was causing `./setup` final banner to show OS version instead of bundle version).
+
+### Tooling / contributor experience
+- `.shellcheckrc` — disables SC2086, SC1091, SC2155, SC2154 (justified inline)
+- `.editorconfig` — 2-space, LF, UTF-8, except .ps1 (CRLF, 4-space)
+- `install.sh` — reads `VERSION`, supports `--version` and `--help`, banner shows version
+- `tests/` directory for ongoing test suites
+- README + QUICKSTART rewritten to lead with `./setup`
+
+### Verification
+- 15/15 smoke tests pass against isolated `$HOME` fixture
+- `./setup --doctor` correctly identifies all 7 AI CLIs on the dev machine
+- Manifest written/read correctly; second `./setup` run = verify-only no-op
+- shellcheck + shfmt + secret-scan workflows ready for first PR
+
 ## [1.17.0] — 2026-04-25
 
 ### Added — Obsidian + markitdown universal tools

@@ -9,6 +9,7 @@
 set -euo pipefail
 
 BUNDLE_DIR="$(cd "$(dirname "$0")" && pwd)"
+VERSION="$(cat "$BUNDLE_DIR/VERSION" 2>/dev/null || echo 'dev')"
 DRY_RUN=0
 MODE=""
 TARGET=""
@@ -17,6 +18,8 @@ TARGET=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=1; shift ;;
+    --version) echo "claude-universal $VERSION"; exit 0 ;;
+    -h|--help) MODE="help"; shift ;;
     user|project) MODE="$1"; shift ;;
     *) TARGET="$1"; shift ;;
   esac
@@ -184,9 +187,13 @@ merge_gitignore() {
 
 usage() {
   cat <<USAGE
+claude-universal installer (v$VERSION)
+
 Usage:
   $0 [--dry-run] user
   $0 [--dry-run] project /absolute/path/to/repo
+  $0 --version
+  $0 --help
 
 Modes:
   user     Merge into ~/.claude/ (global scope)
@@ -206,6 +213,7 @@ Examples:
 USAGE
 }
 
+[[ "$MODE" == "help" ]] && { usage; exit 0; }
 [[ -z "$MODE" ]] && { usage; exit 1; }
 
 # ======================================================
