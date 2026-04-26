@@ -10,6 +10,15 @@ verify_one() {
   fi
 }
 
+_check_if_present() {
+  # Run verify_one only when the binary exists. Wrapped in if/fi so a missing
+  # binary doesn't make the line return non-zero (which set -e would catch).
+  local bin="$1" name="$2" cmd="$3"
+  if command -v "$bin" >/dev/null 2>&1; then
+    verify_one "$name" "$cmd"
+  fi
+}
+
 verify_all() {
   step "7/8 — verify"
 
@@ -20,16 +29,17 @@ verify_all() {
   verify_one "skill-router hook wired"  "jq -e '.hooks.UserPromptSubmit[].hooks[]?.command | select(test(\"skill-router.sh\"))' $HOME/.claude/settings.json"
 
   # AI CLIs (only if present)
-  command -v claude   >/dev/null 2>&1 && verify_one "claude --version"   "claude --version"
-  command -v codex    >/dev/null 2>&1 && verify_one "codex --version"    "codex --version"
-  command -v goose    >/dev/null 2>&1 && verify_one "goose --version"    "goose --version"
-  command -v gemini   >/dev/null 2>&1 && verify_one "gemini --version"   "gemini --version"
-  command -v kimi     >/dev/null 2>&1 && verify_one "kimi --version"     "kimi --version"
-  command -v opencode >/dev/null 2>&1 && verify_one "opencode --version" "opencode --version"
+  _check_if_present claude   "claude --version"   "claude --version"
+  _check_if_present codex    "codex --version"    "codex --version"
+  _check_if_present goose    "goose --version"    "goose --version"
+  _check_if_present gemini   "gemini --version"   "gemini --version"
+  _check_if_present kimi     "kimi --version"     "kimi --version"
+  _check_if_present opencode "opencode --version" "opencode --version"
 
   # Add-ons (only if installed)
-  command -v obsidian-cli >/dev/null 2>&1 && verify_one "obsidian-cli list-vaults" "obsidian-cli list-vaults"
-  command -v markitdown   >/dev/null 2>&1 && verify_one "markitdown --version"     "markitdown --version"
+  _check_if_present obsidian-cli "obsidian-cli list-vaults" "obsidian-cli list-vaults"
+  _check_if_present markitdown   "markitdown --version"     "markitdown --version"
+  return 0
 }
 
 verify_doctor() {
@@ -43,4 +53,5 @@ verify_doctor() {
   command -v kimi     >/dev/null 2>&1 || hint "Kimi CLI not found. Install: pipx install kimi-cli"
   command -v opencode >/dev/null 2>&1 || hint "OpenCode not found. Install: curl -fsSL https://opencode.ai/install | sh"
   command -v ollama   >/dev/null 2>&1 || hint "Ollama not found. Install: bash $BUNDLE_DIR/scripts/install-ollama.sh"
+  return 0
 }
