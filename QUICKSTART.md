@@ -1,36 +1,99 @@
-# Quickstart — 5 minutes to a configured workstation
+# Quickstart — one command
 
-## Prereqs
-
-- Linux / macOS / WSL2 (native Windows works for most things via PowerShell scripts)
-- Bash 4+ or zsh
-- `git`, `curl`, `jq`, `python3` (3.10+), Node.js 20+ (for npm-based MCPs)
-- At least one AI coding CLI installed:
-  [Claude Code](https://docs.claude.com/claude-code) ·
-  [Codex](https://github.com/openai/codex) ·
-  [Goose](https://block.github.io/goose) ·
-  [Gemini CLI](https://github.com/google-gemini/gemini-cli) ·
-  [Kimi CLI](https://platform.moonshot.cn/docs/cli) ·
-  [OpenCode](https://opencode.ai) ·
-  [Claw Code](https://claw.ac)
-
-## 1. Clone
+## TL;DR
 
 ```bash
 git clone https://github.com/Achitokun14/claude-universal.git
 cd claude-universal
+./setup
 ```
 
-## 2. Set up your secrets (local-only, gitignored)
+Done. The bundle detects your OS, your AI CLIs, your shell — and applies safe defaults everywhere. Re-runnable, idempotent, reversible.
+
+## What `./setup` does
+
+Eight phases, all logged to your terminal:
+
+1. **Detect** — OS / arch / pkg-manager / shell / which AI CLIs you have
+2. **Plan** — print exactly what would change; prompt once unless `--yes`
+3. **Install prereqs** — `jq`, `python3`, `node`, `curl`, `git` via your pkg-manager (only what's missing)
+4. **Apply user-scope** — merge `~/.claude/{settings.json,CLAUDE.md,docs,hooks,commands}` (idempotent — never clobbers your edits)
+5. **Skills + scaffolding** — design-skill family, llm-wiki, improvement-state, useful-resources
+6. **Wire AI CLIs** — for every detected CLI: skills/commands/hooks/MCPs in its native format
+7. **Manifest** — record version + install timestamp at `~/.claude/.claude-universal-manifest.json`
+8. **Verify** — smoke checks per agent; one PASS/FAIL line each
+
+## Flags
+
+| Flag | Purpose |
+|---|---|
+| `--dry-run` | Show plan; change nothing |
+| `--yes` / `-y` | Skip prompts (auto-yes) |
+| `--update` | `git pull --ff-only` + reapply |
+| `--with=NAME[,NAME]` | Install opt-in add-ons (`obsidian`, `markitdown`, `lightpanda`, `ghidra`, `langextract`, `ollama`, `claw-code`, `warp`, `zrok`, `inspired`) |
+| `--skip=STEP[,STEP]` | Skip steps (`skills`, `scaffolding`, `sync`) |
+| `--only=user` | Only user-scope, skip skills/sync/add-ons |
+| `--uninstall` | Restore latest `.bak`, remove bundle entries, leave your custom files alone |
+| `--doctor` | Diagnose without changing anything |
+| `--version` | Print version |
+| `--help` | All flags |
+
+## Common flows
+
+### First-time install
 
 ```bash
-cp CREDS.md.template CREDS.md
-cp SECRETS.md.template SECRETS.md
-$EDITOR CREDS.md          # fill in your env-var inventory
-$EDITOR SECRETS.md        # pick a storage strategy
+git clone https://github.com/Achitokun14/claude-universal.git
+cd claude-universal
+./setup --dry-run                       # preview
+./setup                                 # apply
 ```
 
-Add at minimum to `~/.zshrc` (or equivalent):
+### Headless / CI install
+
+```bash
+./setup --yes --with=obsidian,markitdown,langextract
+```
+
+### Install just the user-scope (no skills, no add-ons)
+
+```bash
+./setup --only=user
+```
+
+### Update later
+
+```bash
+./setup --update                        # git pull + reapply
+```
+
+### Diagnose without changing anything
+
+```bash
+./setup --doctor
+```
+
+Prints what's installed, what's missing, and one-line install hints for missing AI CLIs.
+
+### Uninstall
+
+```bash
+./setup --uninstall
+```
+
+Restores the most recent `~/.claude/settings.json.bak.*`, strips the managed CLAUDE.md block, removes bundle-owned hooks and docs. Custom files stay.
+
+## Set up secrets
+
+```bash
+cp CREDS.md.template CREDS.md       # env-var inventory
+cp SECRETS.md.template SECRETS.md   # storage cookbook (Bitwarden, 1Password, Keychain, etc.)
+$EDITOR CREDS.md SECRETS.md
+```
+
+Both files are gitignored — they live on your machine, not in the repo.
+
+Add at minimum to `~/.zshrc` (or your shell rc):
 
 ```bash
 export MINIMAX_API_KEY="<your aggregator key>"   # used by goose planner, claw, kimi/opencode
@@ -39,108 +102,44 @@ export GEMINI_API_KEY="<your google key>"        # used by gemini-cli, /extract 
 
 …then `source ~/.zshrc`.
 
-## 3. Dry-run install (read-only preview)
+## Per-AI-CLI install (do this once if you don't have them)
+
+`./setup` doesn't auto-install the AI CLIs — those are your choices. Pick what you want:
 
 ```bash
-bash install.sh --dry-run user
+# Claude Code
+# https://docs.claude.com/claude-code
+
+# Codex
+npm install -g @openai/codex
+
+# Goose
+curl -fsSL https://block.github.io/goose/install.sh | sh
+
+# Gemini CLI
+npm install -g @google/gemini-cli
+
+# Kimi CLI
+pipx install kimi-cli
+
+# OpenCode
+curl -fsSL https://opencode.ai/install | sh
+
+# Claw Code
+bash scripts/install-claw-code.sh
 ```
 
-Shows every change it *would* make to `~/.claude/`. Read it. If anything looks wrong — STOP and file an issue.
-
-## 4. Real install
-
-```bash
-bash install.sh user                       # global config (~/.claude/)
-bash install-skills.sh                     # the design skill family
-bash scripts/init-llm-wiki.sh              # persistent knowledge wiki
-bash scripts/init-improvement-state.sh     # session improvement tracking
-bash scripts/bootstrap-resources.sh        # useful-resources.md autotrack
-```
-
-For a specific repo:
-
-```bash
-bash install.sh project /path/to/your/repo
-```
-
-## 5. Optional installers (pick what you need)
-
-```bash
-bash scripts/install-obsidian.sh           # obsidian-cli + obsidian-mcp wired into 6 agents
-bash scripts/install-markitdown.sh         # PDF/Office → Markdown converter
-bash scripts/install-langextract.sh        # structured extraction (Gemini/OpenAI/Ollama)
-bash scripts/install-lightpanda.sh         # 16× faster headless browser MCP
-bash scripts/install-warp.sh               # cc/kc/oc/cw shell aliases
-bash scripts/install-claw-code.sh          # the Claw Code aggregator-router
-bash scripts/install-zrok.sh               # ngrok replacement for tunnels
-bash scripts/install-ghidra.sh             # Ghidra + GhidraMCP for binary analysis
-bash scripts/install-inspired.sh           # interactive: BASE / PAUL / CARL / superpowers / etc.
-bash scripts/install-ollama.sh             # Ollama + curated local models
-```
-
-## 6. Cross-tool sync (after adding new commands/skills/MCPs)
-
-```bash
-bash scripts/sync-cross-tool.sh             # portable subset (markdown + MCPs)
-bash scripts/sync-cross-tool-native.sh      # deep per-tool native (skills, agents, providers)
-```
-
-## 7. Verify
-
-```bash
-# Per-CLI version checks
-claude --version
-goose --version
-codex --version
-gemini --version
-kimi --version
-opencode --version
-claw --version 2>/dev/null  # if installed
-
-# MCP health (Claude)
-claude mcp list
-
-# Skill inventory
-ls ~/.claude/skills/ | wc -l
-```
-
-## What just got installed
-
-| Component | Path |
-|---|---|
-| Universal rules | `~/.claude/CLAUDE.md` (managed-block append) |
-| 8 hooks (PostToolUse + Stop + UserPromptSubmit) | `~/.claude/hooks/*.sh` |
-| Skill router | `~/.claude/hooks/skill-router.{sh,conf}` |
-| Settings (deep-merged) | `~/.claude/settings.json` |
-| Docs | `~/.claude/docs/{RULES,SETTINGS,HOOKS,MCPS,SKILLS,...}.md` |
-| 13 slash commands | `~/.claude/commands/` |
+Then run `./setup` again — it'll detect the new CLIs and wire them.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
+| `./setup: Permission denied` | `chmod +x setup setup.sh lib/*.sh` |
+| `error: jq not found` | `./setup` will install it — say yes when prompted, or run your pkg-manager manually |
 | Goose returns 401 | Check `GOOSE_OPENAI_API_KEY` in `~/.config/goose/config.yaml` is the literal value (Goose YAML doesn't shell-expand) |
 | Claude doesn't see new skills | Restart Claude Code (skills register at session-start) |
-| Hooks don't fire | `chmod +x ~/.claude/hooks/*.sh` and check `~/.claude/settings.json` `hooks` block |
-| `obsidian-cli: command not found` | Re-run `scripts/install-obsidian.sh`; ensure `~/.local/bin` is on `PATH` |
+| Hook isn't firing | `chmod +x ~/.claude/hooks/*.sh` and re-run `./setup --doctor` |
+| `obsidian-cli: command not found` | `./setup --with=obsidian` and ensure `~/.local/bin` is on `PATH` |
 
-For more: see `HOW-TO-USE.md`, `ARCHITECTURE.md`, and per-tool docs in `user/docs/`.
-
-## Uninstall
-
-```bash
-# Restore the most recent backup
-mv ~/.claude/settings.json.bak.<TIMESTAMP> ~/.claude/settings.json
-
-# Remove managed block from ~/.claude/CLAUDE.md
-sed -i '/<!-- BEGIN: claude-universal/,/<!-- END: claude-universal/d' ~/.claude/CLAUDE.md
-
-# Remove bundled hooks (keep your custom ones)
-rm ~/.claude/hooks/{auto-format,block-ai-attribution,block-secret-writes,entity-tracker,memory-compiler,notify-stop,session-context,tool-inventory,track-improvement,track-resources,skill-router}.sh
-rm ~/.claude/hooks/skill-router.conf
-
-# (Optional) remove docs
-rm -rf ~/.claude/docs/
-```
-
-The bundle never deletes anything you wrote yourself — only the markers it added.
+For deeper details: [HOW-TO-USE.md](HOW-TO-USE.md), [ARCHITECTURE.md](ARCHITECTURE.md), per-tool docs in `user/docs/`.

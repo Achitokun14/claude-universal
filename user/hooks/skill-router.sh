@@ -14,7 +14,13 @@
 
 set -euo pipefail
 
-ROUTER_CONF="${HOME}/.claude/hooks/skill-router.conf"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Prefer user-scope conf; fall back to script-adjacent (test runs + fresh installs)
+if [[ -f "${HOME}/.claude/hooks/skill-router.conf" ]]; then
+  ROUTER_CONF="${HOME}/.claude/hooks/skill-router.conf"
+else
+  ROUTER_CONF="${SCRIPT_DIR}/skill-router.conf"
+fi
 STATE_DIR="${HOME}/.claude/hooks/.state"
 STATE_FILE="${STATE_DIR}/skill-router.last"
 MAX_HINTS=5

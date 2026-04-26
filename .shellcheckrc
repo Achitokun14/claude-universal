@@ -1,0 +1,16 @@
+# shellcheck config — claude-universal
+# Disabled checks justified inline.
+
+# SC2086: word-splitting in unquoted vars — we deliberately splat in some places
+disable=SC2086
+
+# SC1091: not following sourced files (lib/*.sh sourced at runtime)
+disable=SC1091
+
+# SC2155: declare-and-assign warning — used widely, low-risk
+disable=SC2155
+
+# SC2154: var referenced but not assigned — we set vars from sourced helpers
+disable=SC2154
+
+external-sources=true

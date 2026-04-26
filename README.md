@@ -17,20 +17,35 @@ If you use **Claude Code**, **Codex**, **Goose**, **Gemini CLI**, **Kimi**, **Op
 - Provides **idempotent installers** — run twice, never break
 - Treats **secrets as a first-class concern** — none in this repo, gitignored templates explain how to store them locally
 
-## Quick install
+## Quick install — **one command**
 
 ```bash
 git clone https://github.com/Achitokun14/claude-universal.git
 cd claude-universal
-cp CREDS.md.template CREDS.md       # local-only, gitignored
-cp SECRETS.md.template SECRETS.md   # local-only, gitignored
-$EDITOR CREDS.md SECRETS.md         # fill in your env-var inventory
-
-bash install.sh --dry-run user      # preview every change
-bash install.sh user                # apply
+./setup
 ```
 
-See [QUICKSTART.md](QUICKSTART.md) for the 5-minute path including optional installers.
+That's it. `./setup` detects your OS + which AI CLIs you have installed, plans the changes, prompts once, and applies. Re-running is a safe no-op (or auto-update with `--update`).
+
+```bash
+./setup                                  # install (or no-op if up-to-date)
+./setup --dry-run                        # preview without changing anything
+./setup --yes --with=obsidian,markitdown # full + 2 add-ons, no prompts
+./setup --update                         # git pull + reapply
+./setup --doctor                         # diagnose without changing anything
+./setup --uninstall                      # restore .bak, remove bundle entries
+./setup --help                           # all flags
+```
+
+For secrets, copy the gitignored templates first:
+
+```bash
+cp CREDS.md.template CREDS.md       # env-var inventory
+cp SECRETS.md.template SECRETS.md   # storage cookbook
+$EDITOR CREDS.md SECRETS.md
+```
+
+See [QUICKSTART.md](QUICKSTART.md) for the full 5-minute path.
 
 ## What's included
 

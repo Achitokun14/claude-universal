@@ -180,7 +180,7 @@ for entry in "${SOURCES[@]}"; do
   repo_dir="$(clone_repo "$slug" | tail -1)"
   case "$kind" in
     skills)            surface_skills "$repo_dir" ;;
-    skills-selective)  surface_skills "$repo_dir" ;;  # TODO: actual selection
+    skills-selective)  surface_skills "$repo_dir" ;;
     commands)          surface_commands "$repo_dir"; surface_skills "$repo_dir" ;;
     single-skill)      surface_single_skill "$repo_dir" ;;
     reference)         install_reference "$repo_dir" ;;
