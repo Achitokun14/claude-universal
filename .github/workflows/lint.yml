@@ -1,0 +1,75 @@
+name: lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
+      - name: Run shellcheck
+        run: |
+          set -e
+          find . -type f -name "*.sh" \
+            -not -path "./.git/*" \
+            -not -path "./references/*" \
+            -not -path "./_inspired/*" \
+            -print0 | xargs -0 shellcheck
+
+  shfmt:
+    name: shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shfmt
+        run: |
+          curl -fsSL -o /tmp/shfmt \
+            https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64
+          chmod +x /tmp/shfmt
+          sudo mv /tmp/shfmt /usr/local/bin/shfmt
+      - name: Check formatting (diff-only, advisory)
+        run: |
+          find . -type f -name "*.sh" \
+            -not -path "./.git/*" \
+            -not -path "./references/*" \
+            -not -path "./_inspired/*" \
+            -print0 | xargs -0 shfmt -i 2 -ci -bn -d || true
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for committed secrets
+        run: |
+          set -e
+          if grep -rEI "sk-[a-zA-Z0-9_-]{20,}|ghp_[a-zA-Z0-9]{20,}|xoxb-[a-zA-Z0-9-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|enc2:[a-f0-9]+" \
+               --include="*.sh" --include="*.md" --include="*.json" --include="*.toml" --include="*.yaml" --include="*.yml" \
+               . ; then
+            echo "::error::secret-shaped string detected in committed files"
+            exit 1
+          fi
+          echo "no obvious secret shapes found"
+
+  path-leak-scan:
+    name: path-leak-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for hard-coded /home or /Users paths
+        run: |
+          set -e
+          if grep -rEIn "/home/[a-z]+/|/Users/[A-Za-z]+/" \
+               --include="*.sh" --include="*.json" --include="*.toml" --include="*.yaml" \
+               . ; then
+            echo "::error::hard-coded user path detected — use \$HOME or ~"
+            exit 1
+          fi
+          echo "no hard-coded user paths"

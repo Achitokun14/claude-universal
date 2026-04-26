@@ -47,7 +47,7 @@ chmod +x "$BIN_DIR/zrok"
 say "installed: $BIN_DIR/zrok"
 "$BIN_DIR/zrok" version 2>&1 | tail -2
 
-cat <<'NEXT'
+cat <<'EOM'
 
 NEXT STEPS (interactive — zrok account is required):
 
@@ -61,4 +61,4 @@ NEXT STEPS (interactive — zrok account is required):
        bash ~/Desktop/ACTIVITIES/claude-universal/scripts/zrok-share.sh
 
   Self-hosting? See https://docs.zrok.io/docs/guides/self-hosting
-NEXT
+EOM
