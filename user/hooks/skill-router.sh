@@ -57,7 +57,9 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
   purpose="${rest#*|||}"
   [[ -z "$pat" || -z "$name" ]] && continue
 
-  if [[ "$PROMPT_LC" =~ $pat ]]; then
+  # Use grep (not bash =~) so POSIX char-class word boundaries
+  # ([[:<:]]/[[:>:]]) work on both BSD (macOS) and GNU (linux) regex engines.
+  if printf '%s' "$PROMPT_LC" | grep -Eq -- "$pat"; then
     # Dedup within this invocation.
     [[ -n "${SEEN[$name]:-}" ]] && continue
     SEEN["$name"]=1
